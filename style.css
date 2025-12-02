@@ -194,7 +194,18 @@ body {
 }
 
 .instr-arrow {
-  font-size: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  border-radius: 12px;
+  background: #6c8dff;
+  color: #ffffff;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 10px rgba(108, 141, 255, 0.4);
 }
 
 .instr-text {
