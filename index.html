@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mèo Tìm Đường Về Nhà</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="board">
+        <h1>Mèo đi theo chỉ dẫn</h1>
+        <p class="hint">
+          Dùng phím mũi tên hoặc các nút bên dưới để điều khiển mèo theo đúng
+          lộ trình về nhà.
+        </p>
+        <div id="grid" class="grid" role="grid" aria-label="Bản đồ đường về nhà"></div>
+        <div class="controls" aria-label="Các nút điều hướng">
+          <button data-dir="up">↑</button>
+          <div class="middle">
+            <button data-dir="left">←</button>
+            <button data-dir="down">↓</button>
+            <button data-dir="right">→</button>
+          </div>
+        </div>
+        <p id="status" class="status">Thực hiện đúng chỉ dẫn để đưa mèo về nhà.</p>
+        <button id="reset" class="reset">Tạo hành trình mới</button>
+      </section>
+      <section class="sidebar">
+        <h2>Lộ trình về nhà</h2>
+        <ol id="instructionList" class="instructions"></ol>
+        <p class="tip">
+          Mỗi bước tương ứng với một lần nhấn phím. Nếu đi sai hướng, bạn cần
+          thử lại theo đúng thứ tự.
+        </p>
+      </section>
+    </main>
+
+    <div id="winOverlay" class="overlay" aria-hidden="true">
+      <div class="modal">
+        <button class="modal-close" id="winClose" aria-label="Đóng thông báo">
+          ×
+        </button>
+        <div class="modal-emoji">🎉🐱🏠</div>
+        <h2>Mèo đã về nhà!</h2>
+        <p class="modal-text">
+          Bạn đã đưa mèo đi đúng theo chỉ dẫn. Thử một hành trình mới nhé?
+        </p>
+        <button id="winPlayAgain" class="modal-button">Chơi lại</button>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
+
