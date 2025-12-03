@@ -6,6 +6,7 @@ const controlButtons = document.querySelectorAll(".controls button");
 const winOverlay = document.getElementById("winOverlay");
 const winClose = document.getElementById("winClose");
 const winPlayAgain = document.getElementById("winPlayAgain");
+const showPathToggle = document.getElementById("showPathToggle");
 
 const GRID_SIZE = 6;
 
@@ -49,6 +50,15 @@ function createGrid() {
 }
 
 function updateGrid() {
+  const showPath = showPathToggle ? showPathToggle.checked : true;
+  if (gridElement) {
+    if (showPath) {
+      gridElement.classList.remove("hide-path");
+    } else {
+      gridElement.classList.add("hide-path");
+    }
+  }
+
   document.querySelectorAll(".cell").forEach((cell) => {
     cell.classList.remove(
       "cat",
@@ -255,6 +265,12 @@ function init() {
   if (winPlayAgain) {
     winPlayAgain.addEventListener("click", () => {
       generatePath();
+    });
+  }
+
+  if (showPathToggle) {
+    showPathToggle.addEventListener("change", () => {
+      updateGrid();
     });
   }
 }

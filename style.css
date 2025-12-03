@@ -64,6 +64,12 @@ body {
   box-shadow: inset 0 0 0 2px rgba(255, 196, 69, 0.7);
 }
 
+.grid.hide-path .cell.path:not(.path-next):not(.path-done) {
+  background: #fff;
+  box-shadow: none;
+  border: none;
+}
+
 .cell.path-next {
   background: #ffe08a;
   box-shadow: inset 0 0 0 3px #ff9800, 0 0 10px rgba(255, 152, 0, 0.9);
@@ -205,13 +211,13 @@ body {
 
 .controller-shell {
   position: relative;
-  margin: 1.2rem 0 0.8rem;
+  margin: 1.2rem auto 0.8rem;
   padding: 1.4rem 3.4rem;
   border-radius: 70px;
   border: 3px solid #111;
   background: #ffffff;
   box-shadow: 0 14px 24px rgba(0, 0, 0, 0.15);
-  max-width: 340px;
+  max-width: 380px;
   width: 100%;
 }
 
@@ -249,6 +255,28 @@ body {
 
 .status.success {
   color: #2d8659;
+}
+
+.options {
+  margin: 0.4rem 0 0.6rem;
+}
+
+.option-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #414867;
+  cursor: pointer;
+}
+
+.option-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid #6c8dff;
+  accent-color: #6c8dff;
+  cursor: pointer;
 }
 
 .reset {
