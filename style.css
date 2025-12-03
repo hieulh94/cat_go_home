@@ -29,6 +29,14 @@ body {
   box-shadow: 0 25px 45px rgba(15, 29, 54, 0.1);
 }
 
+.app.sidebar-hidden {
+  grid-template-columns: minmax(280px, 420px);
+}
+
+.sidebar.hidden {
+  display: none;
+}
+
 .board h1 {
   margin: 0 0 0.5rem;
   font-size: 1.8rem;
@@ -108,61 +116,48 @@ body {
 .cell.cat::after {
   content: "🐱";
   position: absolute;
-  bottom: 4px;
-  left: 6px;
-  font-size: 1.4rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
   transform-origin: center;
   transition: transform 160ms ease;
 }
 
 .cell.cat.cat-dir-up::after {
-  transform: rotate(180deg);
+  transform: translate(-50%, -50%) rotate(180deg);
 }
 
 .cell.cat.cat-dir-right::after {
-  transform: rotate(-90deg);
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .cell.cat.cat-dir-down::after {
-  transform: rotate(0deg);
+  transform: translate(-50%, -50%) rotate(0deg);
 }
 
 .cell.cat.cat-dir-left::after {
-  transform: rotate(90deg);
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .cell.cat::before {
-  content: "";
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  top: 4px;
-  right: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: #ffffff;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  display: none;
 }
 
 .cell.cat-next-up::before {
-  content: "↑";
+  display: none;
 }
 
 .cell.cat-next-down::before {
-  content: "↓";
+  display: none;
 }
 
 .cell.cat-next-left::before {
-  content: "←";
+  display: none;
 }
 
 .cell.cat-next-right::before {
-  content: "→";
+  display: none;
 }
 
 .cell.home::after {
@@ -272,16 +267,20 @@ body {
 }
 
 .options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin: 0.4rem 0 0.6rem;
 }
 
 .option-toggle {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.9rem;
   color: #414867;
   cursor: pointer;
+  width: 100%;
 }
 
 .option-toggle input[type="checkbox"] {
