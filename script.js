@@ -50,7 +50,21 @@ function createGrid() {
 
 function updateGrid() {
   document.querySelectorAll(".cell").forEach((cell) => {
-    cell.classList.remove("cat", "home", "path", "path-done", "path-next");
+    cell.classList.remove(
+      "cat",
+      "home",
+      "path",
+      "path-done",
+      "path-next",
+      "cat-next-up",
+      "cat-next-down",
+      "cat-next-left",
+      "cat-next-right",
+      "cat-dir-up",
+      "cat-dir-down",
+      "cat-dir-left",
+      "cat-dir-right",
+    );
     const row = Number(cell.dataset.row);
     const col = Number(cell.dataset.col);
 
@@ -68,6 +82,15 @@ function updateGrid() {
 
     if (row === catPosition.row && col === catPosition.col) {
       cell.classList.add("cat");
+
+      const nextDir = !gameFinished && currentStep < instructions.length
+        ? instructions[currentStep]
+        : null;
+
+      if (nextDir) {
+        cell.classList.add(`cat-next-${nextDir}`);
+        cell.classList.add(`cat-dir-${nextDir}`);
+      }
     }
     if (row === homePosition.row && col === homePosition.col) {
       cell.classList.add("home");
@@ -211,6 +234,7 @@ function handleKeydown(event) {
 
 function handleButtonClick(event) {
   const dir = event.currentTarget.dataset.dir;
+  if (!dir) return;
   moveCat(dir);
 }
 

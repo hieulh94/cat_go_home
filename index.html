@@ -15,12 +15,32 @@
           lộ trình về nhà.
         </p>
         <div id="grid" class="grid" role="grid" aria-label="Bản đồ đường về nhà"></div>
-        <div class="controls" aria-label="Các nút điều hướng">
-          <button data-dir="up">↑</button>
-          <div class="middle">
-            <button data-dir="left">←</button>
-            <button data-dir="down">↓</button>
-            <button data-dir="right">→</button>
+        <div class="controller-shell" aria-label="Bảng điều khiển dạng tay cầm">
+          <div class="controls gamepad">
+            <div class="row">
+              <button class="ctrl-btn" data-dir="up">
+                <span class="ctrl-inner">↑</span>
+              </button>
+            </div>
+            <div class="row middle">
+              <button class="ctrl-btn" data-dir="left">
+                <span class="ctrl-inner">←</span>
+              </button>
+              <button class="ctrl-btn ctrl-play" data-action="play" aria-label="Phát">
+                <span class="ctrl-inner">▶</span>
+              </button>
+              <button class="ctrl-btn ctrl-pause" data-action="pause" aria-label="Tạm dừng">
+                <span class="ctrl-inner">⏸</span>
+              </button>
+              <button class="ctrl-btn" data-dir="right">
+                <span class="ctrl-inner">→</span>
+              </button>
+            </div>
+            <div class="row">
+              <button class="ctrl-btn" data-dir="down">
+                <span class="ctrl-inner">↓</span>
+              </button>
+            </div>
           </div>
         </div>
         <p id="status" class="status">Thực hiện đúng chỉ dẫn để đưa mèo về nhà.</p>

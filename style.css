@@ -88,10 +88,61 @@ body {
 .cell.cat::after {
   content: "🐱";
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+  bottom: 4px;
+  left: 6px;
   font-size: 1.4rem;
+  transform-origin: center;
+  transition: transform 160ms ease;
+}
+
+.cell.cat.cat-dir-up::after {
+  transform: rotate(180deg);
+}
+
+.cell.cat.cat-dir-right::after {
+  transform: rotate(-90deg);
+}
+
+.cell.cat.cat-dir-down::after {
+  transform: rotate(0deg);
+}
+
+.cell.cat.cat-dir-left::after {
+  transform: rotate(90deg);
+}
+
+.cell.cat::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.cell.cat-next-up::before {
+  content: "↑";
+}
+
+.cell.cat-next-down::before {
+  content: "↓";
+}
+
+.cell.cat-next-left::before {
+  content: "←";
+}
+
+.cell.cat-next-right::before {
+  content: "→";
 }
 
 .cell.home::after {
@@ -104,33 +155,85 @@ body {
 }
 
 .controls {
-  margin: 1rem 0;
+  margin: 1.2rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
-.controls button {
-  border: none;
-  background: #6c8dff;
-  color: #fff;
-  font-size: 1.5rem;
-  padding: 0.4rem 1.2rem;
-  border-radius: 12px;
+.controls .row {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.ctrl-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 3px solid #000;
+  background: #fff;
+  padding: 0;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease;
-}
-
-.controls button:hover {
-  background: #5a74d9;
-  transform: translateY(-2px);
-}
-
-.controls .middle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.ctrl-inner {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.ctrl-btn:hover .ctrl-inner {
+  background: #000;
+  color: #fff;
+}
+
+.ctrl-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0;
+}
+
+.controller-shell {
+  position: relative;
+  margin: 1.2rem 0 0.8rem;
+  padding: 1.4rem 3.4rem;
+  border-radius: 70px;
+  border: 3px solid #111;
+  background: #ffffff;
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.15);
+  max-width: 340px;
+  width: 100%;
+}
+
+.controller-shell::before,
+.controller-shell::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  width: 60px;
+  height: 30px;
+  border-radius: 30px 30px 0 0;
+  border: 3px solid #111;
+  border-bottom: none;
+  background: #ffffff;
+}
+
+.controller-shell::before {
+  left: 46px;
+}
+
+.controller-shell::after {
+  right: 46px;
 }
 
 .status {
