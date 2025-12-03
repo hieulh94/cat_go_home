@@ -7,6 +7,7 @@ const winOverlay = document.getElementById("winOverlay");
 const winClose = document.getElementById("winClose");
 const winPlayAgain = document.getElementById("winPlayAgain");
 const showPathToggle = document.getElementById("showPathToggle");
+const obstacleToggle = document.getElementById("obstacleToggle");
 
 const GRID_SIZE = 6;
 
@@ -21,6 +22,7 @@ let instructions = [];
 let currentStep = 0;
 let pathPositions = [];
 let gameFinished = false;
+let obstaclePositions = [];
 
 const directionMap = {
   ArrowUp: "up",
@@ -66,6 +68,7 @@ function updateGrid() {
       "path",
       "path-done",
       "path-next",
+      "obstacle",
       "cat-next-up",
       "cat-next-down",
       "cat-next-left",
@@ -88,6 +91,13 @@ function updateGrid() {
       } else if (pathIndex === currentStep + 1) {
         cell.classList.add("path-next");
       }
+    }
+
+    const isObstacle = obstaclePositions.some(
+      (pos) => pos.row === row && pos.col === col,
+    );
+    if (isObstacle) {
+      cell.classList.add("obstacle");
     }
 
     if (row === catPosition.row && col === catPosition.col) {
@@ -115,6 +125,7 @@ function generatePath() {
   let cursor = { ...startPosition };
   pathPositions = [{ ...startPosition }];
   gameFinished = false;
+  obstaclePositions = [];
   if (winOverlay) {
     winOverlay.classList.remove("show");
     winOverlay.setAttribute("aria-hidden", "true");
@@ -157,6 +168,22 @@ function generatePath() {
     pathPositions.push({ ...cursor });
     steps += 1;
   }
+
+  // Tạo chướng ngại vật nếu checkbox được tick
+  if (obstacleToggle && obstacleToggle.checked) {
+    const availablePositions = pathPositions.filter(
+      (pos, idx) =>
+        idx >= 3 && // Ít nhất sau 3 bước đi (index 0, 1, 2 là 3 bước đầu)
+        idx < pathPositions.length - 1 &&
+        !(pos.row === catPosition.row && pos.col === catPosition.col) &&
+        !(pos.row === homePosition.row && pos.col === homePosition.col),
+    );
+    if (availablePositions.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availablePositions.length);
+      obstaclePositions = [availablePositions[randomIndex]];
+    }
+  }
+
   renderInstructions();
   updateGrid();
   updateStatus("Thực hiện các bước theo thứ tự mũi tên.", "info");
@@ -206,17 +233,80 @@ function moveCat(dir) {
   if (gameFinished) return;
   if (currentStep >= instructions.length) return;
 
+  // Kiểm tra nếu người chơi muốn lùi lại khi đang nhìn thấy chướng ngại vật
+  if (currentStep > 0 && currentStep < instructions.length) {
+    const nextDir = instructions[currentStep];
+    const nextOffset = offsetMap[nextDir];
+    const nextPos = {
+      row: catPosition.row + nextOffset.row,
+      col: catPosition.col + nextOffset.col,
+    };
+
+    const hasObstacleAhead = obstaclePositions.some(
+      (pos) => pos.row === nextPos.row && pos.col === nextPos.col,
+    );
+
+    // Nếu có chướng ngại vật ở phía trước
+    if (hasObstacleAhead) {
+      const prevDir = instructions[currentStep - 1];
+      // Tính hướng ngược với hướng vừa đi
+      let oppositeDir = null;
+      if (prevDir === "up") oppositeDir = "down";
+      else if (prevDir === "down") oppositeDir = "up";
+      else if (prevDir === "left") oppositeDir = "right";
+      else if (prevDir === "right") oppositeDir = "left";
+
+      // Nếu người chơi ấn hướng ngược với hướng vừa đi → lùi lại
+      if (dir === oppositeDir) {
+        // Lùi lại vị trí trước đó
+        const prevPos = pathPositions[currentStep - 1];
+        catPosition = { ...prevPos };
+        currentStep -= 1;
+
+        // Xóa chướng ngại vật sau khi đã lùi lại
+        obstaclePositions = obstaclePositions.filter(
+          (pos) => pos.row !== nextPos.row || pos.col !== nextPos.col,
+        );
+
+        renderInstructions();
+        updateGrid();
+        updateStatus("Chướng ngại vật đã biến mất, tiếp tục hành trình nhé!", "info");
+        return;
+      }
+      // Nếu người chơi ấn tiến vào chướng ngại vật → không di chuyển
+      if (dir === nextDir) {
+        updateStatus("Mèo gặp chướng ngại vật, hãy tự lùi lại một bước để bỏ nó đi.", "error");
+        return;
+      }
+    }
+  }
+
   if (dir !== instructions[currentStep]) {
     updateStatus("Sai hướng! Hãy làm lại bước này.", "error");
     return;
   }
 
   const offset = offsetMap[dir];
-  catPosition = {
+  const nextPos = {
     row: catPosition.row + offset.row,
     col: catPosition.col + offset.col,
   };
 
+  // Kiểm tra chướng ngại vật
+  const hitObstacle = obstaclePositions.some(
+    (pos) => pos.row === nextPos.row && pos.col === nextPos.col,
+  );
+
+  if (hitObstacle) {
+    // KHÔNG cho mèo tiến vào ô chướng ngại vật
+    // KHÔNG tự lùi về bước trước đó
+    // Chỉ thông báo và yêu cầu người chơi tự lùi lại
+    updateStatus("Mèo gặp chướng ngại vật, hãy tự lùi lại một bước để bỏ nó đi.", "error");
+    // KHÔNG di chuyển mèo, KHÔNG tăng currentStep, KHÔNG tự lùi
+    return;
+  }
+
+  catPosition = nextPos;
   currentStep += 1;
   renderInstructions();
   updateGrid();
