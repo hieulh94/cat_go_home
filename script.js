@@ -7,6 +7,7 @@ const winOverlay = document.getElementById("winOverlay");
 const winClose = document.getElementById("winClose");
 const winPlayAgain = document.getElementById("winPlayAgain");
 const showPathToggle = document.getElementById("showPathToggle");
+const showInstructionsToggle = document.getElementById("showInstructionsToggle");
 const obstacleToggle = document.getElementById("obstacleToggle");
 
 const GRID_SIZE = 6;
@@ -103,13 +104,16 @@ function updateGrid() {
     if (row === catPosition.row && col === catPosition.col) {
       cell.classList.add("cat");
 
-      const nextDir = !gameFinished && currentStep < instructions.length
-        ? instructions[currentStep]
+      // Mèo quay mặt theo hướng vừa đi (nếu có), không phải hướng sắp đi
+      const prevDir = currentStep > 0 && !gameFinished
+        ? instructions[currentStep - 1]
         : null;
 
-      if (nextDir) {
-        cell.classList.add(`cat-next-${nextDir}`);
-        cell.classList.add(`cat-dir-${nextDir}`);
+      if (prevDir) {
+        cell.classList.add(`cat-dir-${prevDir}`);
+      } else {
+        // Bước đầu tiên, mèo quay mặt theo hướng đầu tiên (up)
+        cell.classList.add("cat-dir-up");
       }
     }
     if (row === homePosition.row && col === homePosition.col) {
@@ -284,91 +288,47 @@ function moveCat(dir) {
   if (gameFinished) return;
   if (currentStep >= instructions.length) return;
 
-  // Kiểm tra nếu người chơi muốn lùi lại khi đang nhìn thấy chướng ngại vật
+  // TRƯỚC TIÊN: Kiểm tra xem có chướng ngại vật ở ô kế tiếp (theo hướng sắp đi) không
+  // Nếu có, CHỈ cho phép ấn nút Xuống (quay lại), tất cả các nút khác đều bị từ chối
   if (currentStep > 0 && currentStep < instructions.length) {
     const nextDir = instructions[currentStep];
-    const prevDirForObstacle = instructions[currentStep - 1];
-    const prevPrevDirForObstacle = currentStep > 1 ? instructions[currentStep - 2] : null;
-    const { displayText: displayTextForObstacle } = formatDirectionRelative(nextDir, prevDirForObstacle);
-    
     const nextOffset = offsetMap[nextDir];
-    const nextPos = {
+    const nextPosForObstacle = {
       row: catPosition.row + nextOffset.row,
       col: catPosition.col + nextOffset.col,
     };
 
     const hasObstacleAhead = obstaclePositions.some(
-      (pos) => pos.row === nextPos.row && pos.col === nextPos.col,
+      (pos) => pos.row === nextPosForObstacle.row && pos.col === nextPosForObstacle.col,
     );
 
-    // Nếu có chướng ngại vật ở phía trước
+    // Nếu có chướng ngại vật ở ô kế tiếp (theo hướng sắp đi)
     if (hasObstacleAhead) {
-      const prevDir = instructions[currentStep - 1];
-      const prevPrevDir = currentStep > 1 ? instructions[currentStep - 2] : null;
-      const { displayText: prevDisplayText } = formatDirectionRelative(prevDir, prevPrevDir);
+      // QUAN TRỌNG: Khi có chướng ngại vật ở phía trước:
+      // - Không thể đi thẳng (up)
+      // - Không thể sang trái (left)
+      // - Không thể sang phải (right)
+      // - CHỈ có thể ấn nút Xuống (down) để lùi lại
       
-      // Tính hướng ngược với hướng vừa đi (dựa trên hướng thực tế)
-      let oppositeDir = null;
-      if (prevDir === "up") oppositeDir = "down";
-      else if (prevDir === "down") oppositeDir = "up";
-      else if (prevDir === "left") oppositeDir = "right";
-      else if (prevDir === "right") oppositeDir = "left";
-
-      // Kiểm tra nếu người chơi ấn nút quay lại
-      // Xử lý các trường hợp hiển thị tương đối: "Đi thẳng", "Rẽ phải", "Rẽ trái"
-      let isBackButton = false;
-      
-      // Nếu bước trước hiển thị "Đi thẳng" (mũi tên ↑), nút quay lại là ↓
-      if (prevDisplayText === "Đi thẳng" && dir === "down") {
-        isBackButton = true;
-      }
-      // Nếu bước trước hiển thị "Rẽ phải" (mũi tên →), nút quay lại là ←
-      else if (prevDisplayText === "Rẽ phải" && dir === "left") {
-        isBackButton = true;
-      }
-      // Nếu bước trước hiển thị "Rẽ trái" (mũi tên ←), nút quay lại là →
-      else if (prevDisplayText === "Rẽ trái" && dir === "right") {
-        isBackButton = true;
-      }
-      // Nếu ấn hướng ngược với hướng thực tế vừa đi
-      else if (dir === oppositeDir) {
-        isBackButton = true;
-      }
-
-      // Nếu người chơi ấn nút quay lại → lùi lại và xóa chướng ngại vật
-      if (isBackButton) {
-        // Lùi lại vị trí trước đó
+      // CHỈ khi ấn nút Xuống (down) → mới lùi lại và xóa chướng ngại vật
+      if (dir === "down") {
         const prevPos = pathPositions[currentStep - 1];
         catPosition = { ...prevPos };
         currentStep -= 1;
-
-        // Xóa chướng ngại vật sau khi đã lùi lại
         obstaclePositions = obstaclePositions.filter(
-          (pos) => pos.row !== nextPos.row || pos.col !== nextPos.col,
+          (pos) => pos.row !== nextPosForObstacle.row || pos.col !== nextPosForObstacle.col,
         );
-
         renderInstructions();
         updateGrid();
         updateStatus("Chướng ngại vật đã biến mất, tiếp tục hành trình nhé!", "info");
         return;
       }
-      // Nếu người chơi ấn tiến vào chướng ngại vật → không di chuyển
-      // Xử lý các trường hợp "Đi thẳng", "Rẽ phải", "Rẽ trái"
-      let isMovingForward = false;
-      if (displayTextForObstacle === "Đi thẳng" && dir === "up") {
-        isMovingForward = true;
-      } else if (displayTextForObstacle === "Rẽ phải" && dir === "right") {
-        isMovingForward = true;
-      } else if (displayTextForObstacle === "Rẽ trái" && dir === "left") {
-        isMovingForward = true;
-      } else if (dir === nextDir) {
-        isMovingForward = true;
-      }
       
-      if (isMovingForward) {
-        updateStatus("Mèo gặp chướng ngại vật, hãy tự lùi lại một bước để bỏ nó đi.", "error");
-        return;
-      }
+      // Nếu KHÔNG phải nút Xuống → KHÔNG cho phép làm gì cả
+      // Không thể đi thẳng (up), không thể sang trái (left), không thể sang phải (right)
+      // CHỈ có thể ấn nút Xuống (down) để lùi lại
+      updateStatus("Mèo gặp chướng ngại vật, hãy ấn nút Xuống để lùi lại.", "error");
+      return;
     }
   }
 
@@ -381,20 +341,27 @@ function moveCat(dir) {
   let isValidInput = false;
   let moveDir = actualDir; // Mặc định dùng hướng thực tế
   
-  if (displayText === "Đi thẳng" && dir === "up") {
-    // Khi hiển thị "Đi thẳng", chấp nhận input "up"
-    isValidInput = true;
-    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
-  } else if (displayText === "Rẽ phải" && dir === "right") {
-    // Khi hiển thị "Rẽ phải", chấp nhận input "right"
-    isValidInput = true;
-    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
-  } else if (displayText === "Rẽ trái" && dir === "left") {
-    // Khi hiển thị "Rẽ trái", chấp nhận input "left"
-    isValidInput = true;
-    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+  if (displayText === "Đi thẳng") {
+    // Khi hiển thị "Đi thẳng", CHỈ chấp nhận input "up" (mũi tên đi thẳng)
+    if (dir === "up") {
+      isValidInput = true;
+      moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+    }
+  } else if (displayText === "Rẽ phải") {
+    // Khi hiển thị "Rẽ phải", CHỈ chấp nhận input "right" (mũi tên rẽ phải)
+    if (dir === "right") {
+      isValidInput = true;
+      moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+    }
+  } else if (displayText === "Rẽ trái") {
+    // Khi hiển thị "Rẽ trái", CHỈ chấp nhận input "left" (mũi tên rẽ trái)
+    if (dir === "left") {
+      isValidInput = true;
+      moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+    }
   } else if (dir === actualDir) {
-    // Nếu input khớp với hướng thực tế (trường hợp không có text tương đối)
+    // Nếu không có text tương đối (không phải "Đi thẳng", "Rẽ phải", "Rẽ trái"),
+    // chấp nhận input khớp với hướng thực tế
     isValidInput = true;
     moveDir = actualDir;
   }
@@ -404,26 +371,30 @@ function moveCat(dir) {
     return;
   }
 
+  // Tính vị trí sắp di chuyển đến
   const offset = offsetMap[moveDir];
   const nextPos = {
     row: catPosition.row + offset.row,
     col: catPosition.col + offset.col,
   };
 
-  // Kiểm tra chướng ngại vật
+  // Kiểm tra chướng ngại vật ở vị trí sắp di chuyển đến
+  // QUAN TRỌNG: Kiểm tra này áp dụng cho TẤT CẢ các hướng (không chỉ phía trước)
+  // Nếu có chướng ngại vật ở vị trí sắp di chuyển đến, KHÔNG cho phép di chuyển
   const hitObstacle = obstaclePositions.some(
     (pos) => pos.row === nextPos.row && pos.col === nextPos.col,
   );
 
   if (hitObstacle) {
     // KHÔNG cho mèo tiến vào ô chướng ngại vật
-    // KHÔNG tự lùi về bước trước đó
-    // Chỉ thông báo và yêu cầu người chơi tự lùi lại
-    updateStatus("Mèo gặp chướng ngại vật, hãy tự lùi lại một bước để bỏ nó đi.", "error");
-    // KHÔNG di chuyển mèo, KHÔNG tăng currentStep, KHÔNG tự lùi
+    // Nếu chướng ngại vật ở phía trước, đã xử lý ở phần đầu hàm rồi
+    // Đây là chướng ngại vật ở hướng khác (trái, phải, sau)
+    // Không cho phép di chuyển vào ô chướng ngại vật
+    updateStatus("Mèo gặp chướng ngại vật ở hướng này, không thể đi tiếp.", "error");
     return;
   }
 
+  // Nếu không có chướng ngại vật, tiếp tục di chuyển bình thường
   catPosition = nextPos;
   currentStep += 1;
   renderInstructions();
@@ -479,6 +450,28 @@ function init() {
   if (showPathToggle) {
     showPathToggle.addEventListener("change", () => {
       updateGrid();
+    });
+  }
+
+  if (showInstructionsToggle) {
+    // Khởi tạo trạng thái ban đầu (mặc định uncheck)
+    const sidebar = document.querySelector(".sidebar");
+    const app = document.querySelector(".app");
+    if (sidebar && app && !showInstructionsToggle.checked) {
+      sidebar.classList.add("hidden");
+      app.classList.add("sidebar-hidden");
+    }
+    
+    showInstructionsToggle.addEventListener("change", () => {
+      if (sidebar && app) {
+        if (showInstructionsToggle.checked) {
+          sidebar.classList.remove("hidden");
+          app.classList.remove("sidebar-hidden");
+        } else {
+          sidebar.classList.add("hidden");
+          app.classList.add("sidebar-hidden");
+        }
+      }
     });
   }
 }
