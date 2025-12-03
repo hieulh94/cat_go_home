@@ -198,11 +198,10 @@ function renderInstructions() {
   instructionList.innerHTML = "";
   instructions.forEach((dir, idx) => {
     const item = document.createElement("li");
-    const arrow =
-      dir === "up" ? "↑" : dir === "down" ? "↓" : dir === "left" ? "←" : "→";
-    item.innerHTML = `<span class="instr-arrow">${arrow}</span><span class="instr-text">${formatDirection(
-      dir,
-    )}</span>`;
+    const prevDir = idx > 0 ? instructions[idx - 1] : null;
+    const { displayText, arrow } = formatDirectionRelative(dir, prevDir);
+    
+    item.innerHTML = `<span class="instr-arrow">${arrow}</span><span class="instr-text">${displayText}</span>`;
     if (idx === currentStep) {
       item.classList.add("current");
     } else if (idx < currentStep) {
@@ -234,6 +233,53 @@ function formatDirection(dir) {
   }
 }
 
+function formatDirectionRelative(dir, prevDir) {
+  // Bước đầu tiên luôn là "Đi thẳng"
+  if (!prevDir) {
+    return {
+      displayText: "Đi thẳng",
+      arrow: "↑", // Mũi tên lên khi "Đi thẳng"
+    };
+  }
+
+  // Nếu cùng hướng với bước trước → Đi thẳng
+  if (prevDir === dir) {
+    return {
+      displayText: "Đi thẳng",
+      arrow: "↑", // Mũi tên lên khi "Đi thẳng"
+    };
+  }
+
+  // Xác định hướng quay: Rẽ phải hay Rẽ trái
+  // Thứ tự theo chiều kim đồng hồ: up -> right -> down -> left -> up
+  const directions = ["up", "right", "down", "left"];
+  const prevIndex = directions.indexOf(prevDir);
+  const currentIndex = directions.indexOf(dir);
+
+  // Tính góc quay
+  let turn = (currentIndex - prevIndex + 4) % 4;
+
+  if (turn === 1) {
+    // Quay 90 độ theo chiều kim đồng hồ → Rẽ phải
+    return {
+      displayText: "Rẽ phải",
+      arrow: "→", // Mũi tên phải khi "Rẽ phải"
+    };
+  } else if (turn === 3) {
+    // Quay 90 độ ngược chiều kim đồng hồ → Rẽ trái
+    return {
+      displayText: "Rẽ trái",
+      arrow: "←", // Mũi tên trái khi "Rẽ trái"
+    };
+  } else {
+    // Quay 180 độ (turn === 2) → Đi thẳng
+    return {
+      displayText: "Đi thẳng",
+      arrow: "↑", // Mũi tên lên khi "Đi thẳng"
+    };
+  }
+}
+
 function moveCat(dir) {
   if (gameFinished) return;
   if (currentStep >= instructions.length) return;
@@ -241,6 +287,10 @@ function moveCat(dir) {
   // Kiểm tra nếu người chơi muốn lùi lại khi đang nhìn thấy chướng ngại vật
   if (currentStep > 0 && currentStep < instructions.length) {
     const nextDir = instructions[currentStep];
+    const prevDirForObstacle = instructions[currentStep - 1];
+    const prevPrevDirForObstacle = currentStep > 1 ? instructions[currentStep - 2] : null;
+    const { displayText: displayTextForObstacle } = formatDirectionRelative(nextDir, prevDirForObstacle);
+    
     const nextOffset = offsetMap[nextDir];
     const nextPos = {
       row: catPosition.row + nextOffset.row,
@@ -254,15 +304,39 @@ function moveCat(dir) {
     // Nếu có chướng ngại vật ở phía trước
     if (hasObstacleAhead) {
       const prevDir = instructions[currentStep - 1];
-      // Tính hướng ngược với hướng vừa đi
+      const prevPrevDir = currentStep > 1 ? instructions[currentStep - 2] : null;
+      const { displayText: prevDisplayText } = formatDirectionRelative(prevDir, prevPrevDir);
+      
+      // Tính hướng ngược với hướng vừa đi (dựa trên hướng thực tế)
       let oppositeDir = null;
       if (prevDir === "up") oppositeDir = "down";
       else if (prevDir === "down") oppositeDir = "up";
       else if (prevDir === "left") oppositeDir = "right";
       else if (prevDir === "right") oppositeDir = "left";
 
-      // Nếu người chơi ấn hướng ngược với hướng vừa đi → lùi lại
-      if (dir === oppositeDir) {
+      // Kiểm tra nếu người chơi ấn nút quay lại
+      // Xử lý các trường hợp hiển thị tương đối: "Đi thẳng", "Rẽ phải", "Rẽ trái"
+      let isBackButton = false;
+      
+      // Nếu bước trước hiển thị "Đi thẳng" (mũi tên ↑), nút quay lại là ↓
+      if (prevDisplayText === "Đi thẳng" && dir === "down") {
+        isBackButton = true;
+      }
+      // Nếu bước trước hiển thị "Rẽ phải" (mũi tên →), nút quay lại là ←
+      else if (prevDisplayText === "Rẽ phải" && dir === "left") {
+        isBackButton = true;
+      }
+      // Nếu bước trước hiển thị "Rẽ trái" (mũi tên ←), nút quay lại là →
+      else if (prevDisplayText === "Rẽ trái" && dir === "right") {
+        isBackButton = true;
+      }
+      // Nếu ấn hướng ngược với hướng thực tế vừa đi
+      else if (dir === oppositeDir) {
+        isBackButton = true;
+      }
+
+      // Nếu người chơi ấn nút quay lại → lùi lại và xóa chướng ngại vật
+      if (isBackButton) {
         // Lùi lại vị trí trước đó
         const prevPos = pathPositions[currentStep - 1];
         catPosition = { ...prevPos };
@@ -279,19 +353,58 @@ function moveCat(dir) {
         return;
       }
       // Nếu người chơi ấn tiến vào chướng ngại vật → không di chuyển
-      if (dir === nextDir) {
+      // Xử lý các trường hợp "Đi thẳng", "Rẽ phải", "Rẽ trái"
+      let isMovingForward = false;
+      if (displayTextForObstacle === "Đi thẳng" && dir === "up") {
+        isMovingForward = true;
+      } else if (displayTextForObstacle === "Rẽ phải" && dir === "right") {
+        isMovingForward = true;
+      } else if (displayTextForObstacle === "Rẽ trái" && dir === "left") {
+        isMovingForward = true;
+      } else if (dir === nextDir) {
+        isMovingForward = true;
+      }
+      
+      if (isMovingForward) {
         updateStatus("Mèo gặp chướng ngại vật, hãy tự lùi lại một bước để bỏ nó đi.", "error");
         return;
       }
     }
   }
 
-  if (dir !== instructions[currentStep]) {
+  // Kiểm tra hướng hiển thị để xử lý các trường hợp "Đi thẳng", "Rẽ phải", "Rẽ trái"
+  const actualDir = instructions[currentStep];
+  const prevDir = currentStep > 0 ? instructions[currentStep - 1] : null;
+  const { displayText } = formatDirectionRelative(actualDir, prevDir);
+  
+  // Kiểm tra input dựa trên text hiển thị
+  let isValidInput = false;
+  let moveDir = actualDir; // Mặc định dùng hướng thực tế
+  
+  if (displayText === "Đi thẳng" && dir === "up") {
+    // Khi hiển thị "Đi thẳng", chấp nhận input "up"
+    isValidInput = true;
+    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+  } else if (displayText === "Rẽ phải" && dir === "right") {
+    // Khi hiển thị "Rẽ phải", chấp nhận input "right"
+    isValidInput = true;
+    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+  } else if (displayText === "Rẽ trái" && dir === "left") {
+    // Khi hiển thị "Rẽ trái", chấp nhận input "left"
+    isValidInput = true;
+    moveDir = actualDir; // Dùng hướng thực tế để di chuyển
+  } else if (dir === actualDir) {
+    // Nếu input khớp với hướng thực tế (trường hợp không có text tương đối)
+    isValidInput = true;
+    moveDir = actualDir;
+  }
+  
+  if (!isValidInput) {
     updateStatus("Sai hướng! Hãy làm lại bước này.", "error");
     return;
   }
 
-  const offset = offsetMap[dir];
+  const offset = offsetMap[moveDir];
   const nextPos = {
     row: catPosition.row + offset.row,
     col: catPosition.col + offset.col,
