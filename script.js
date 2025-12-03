@@ -12,8 +12,8 @@ const obstacleToggle = document.getElementById("obstacleToggle");
 const GRID_SIZE = 6;
 
 const startPosition = {
-  row: GRID_SIZE - 2,
-  col: 0,
+  row: GRID_SIZE - 1,
+  col: 1,
 };
 
 let catPosition = { ...startPosition };
@@ -133,11 +133,16 @@ function generatePath() {
 
   homePosition = { row: 0, col: GRID_SIZE - 2 };
 
+  // Bước đầu tiên luôn đi thẳng (lên)
+  instructions.push("up");
+  cursor = { row: cursor.row - 1, col: cursor.col };
+  pathPositions.push({ ...cursor });
+
   // Khoảng cách Manhattan từ điểm bắt đầu tới nhà
   const startDist =
-    Math.abs(cursor.row - homePosition.row) + Math.abs(cursor.col - homePosition.col);
+    Math.abs(startPosition.row - homePosition.row) + Math.abs(startPosition.col - homePosition.col);
 
-  let steps = 0;
+  let steps = 1; // Đã có 1 bước đầu tiên
   while (steps < startDist) {
     const possible = Object.entries(offsetMap)
       .map(([dir, delta]) => ({
